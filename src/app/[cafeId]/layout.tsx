@@ -7,7 +7,7 @@ export default function CafeCustomerLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-[#0A0A0B] text-white">
+    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-[#0A0A0B] dark:text-white transition-colors duration-300">
       <CustomerNav />
       <main className="pt-20 pb-24 container mx-auto px-4">
         {children}
