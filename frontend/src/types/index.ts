@@ -31,6 +31,8 @@ export interface Order {
   }[];
   status: OrderStatus;
   totalAmount: number;
+  paymentId?: string;
+  paymentStatus?: "pending" | "completed" | "failed";
   createdAt: any;
 }
 
