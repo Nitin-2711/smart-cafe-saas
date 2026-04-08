@@ -1,135 +1,157 @@
-# SmartCafé | Privacy-First QR Ordering SaaS
+# ☕ SmartCafé
 
-![SmartCafé Ecosystem Banner](https://images.unsplash.com/photo-1554118811-1e0d58224f24?auto=format&fit=crop&q=80&w=1600&h=400)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-Realtime-FFCA28?style=for-the-badge&logo=firebase)](https://firebase.google.com/)
+[![TailwindCSS](https://img.shields.io/badge/Tailwind-CSS-38B2AC?style=for-the-badge&logo=tailwind-css)](https://tailwindcss.com/)
+[![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)](LICENSE)
 
-SmartCafé is a multi-tenant, privacy-first QR ordering SaaS designed for high-end cafés. It features a complete ecosystem combining a beautiful consumer-facing web app, a high-speed staff command center, and an enterprise admin dashboard, all synchronized via real-time Firebase listeners.
-
-## 🌟 Core Features
-
-- **Multi-Tenant Architecture**: Single SaaS deployment mapping to hundreds of independent cafés securely via URL segmenting (`/[cafeId]`) and indexed Firestore queries.
-- **Privacy-First DND Mode**: Unique "Silent Drop" toggles allowing customers to explicitly ask wait-staff not to interrupt their dates or deep-work sessions.
-- **Zero-Refresh Workflow**: Absolute real-time UI synchronization using Firebase `onSnapshot` from customer's phone to the staff Kitchen Display System (KDS).
-- **Service Request Hooks**: Floating Action Button allowing seamless pinging for Water, Bill, or Waiter Assistance.
-- **Micro-Animations & Premium UI**: Apple/Linear-inspired interactions, skeleton loading states, glassmorphism, and seamless page transitions utilizing ShadCN UI and Framer Motion.
+**SmartCafé** is a premium, multi-tenant SaaS platform designed to revolutionize the dining experience. By leveraging QR-based ordering and real-time synchronization, it empowers cafés to digitize their operations, reduce wait times, and provide a seamless "privacy-first" experience for customers.
 
 ---
 
-## 🏗️ Technical Architecture
+## ✨ Features
 
-### Frontend (Next.js 15 App Router)
-- **Framework**: `Next.js` utilizing the App router with complete server-side capabilities.
-- **State Management**: `zustand` for high-performance localized cart logic.
-- **Styling**: `TailwindCSS v4` paired with `Shadcn UI` components for structural beauty.
-- **Animations**: `framer-motion` for complex un-mounting and lifecycle animations.
+### 🛒 Customer Experience
+- **QR-Driven Ordering**: Instant menu access via table-specific QR codes.
+- **Real-Time Tracking**: Live order status updates without page refreshes.
+- **Privacy Mode**: "Do Not Disturb" toggle for focused work or quiet dining.
+- **Interactive Menu**: Grouped items, high-quality images, and smooth animations.
 
-### Backend (Firebase)
-- **Database**: Firestore. Highly indexed, NoSQL architecture relying on shallow queries for maximum performance.
-- **Realtime sync**: Full WebSocket connection streaming delta updates (preventing long-polling latency).
+### 🍱 Staff & Operations
+- **KDS (Kitchen Display System)**: A real-time dashboard for staff to manage and progress orders.
+- **Administrative Control**: Manage menus, categories, and inventory across multiple tenants.
+- **Real-Time Analytics**: Insights into peak hours, popular items, and revenue trends.
+- **Multi-Tenant Architecture**: Scale easily across multiple café locations with isolated data.
 
 ---
 
-## 🗂️ Project Structure
+## 🛠 Tech Stack
 
-```text
-├── src/
-│   ├── app/
-│   │   ├── page.tsx                           # Global SaaS Marketing Landing Page
-│   │   ├── layout.tsx                         # Global Theme/Toaster definitions
-│   │   ├── admin/                             # Super-Admin Tenant Management Dashboard
-│   │   ├── staff/[cafeId]/                    # Kitchen / Waiter Command Center
-│   │   └── [cafeId]/                          # Consumer QR Dashboard
-│   │       ├── cart/                          # Cart & Razorpay Checkout Simulation
-│   │       ├── order/[orderId]/               # Live Apple-style Order tracker
-│   │       └── components/                    # Consumer-specific components
-│   ├── components/ui/                         # Headless Shadcn Components
-│   ├── hooks/
-│   │   └── useRealtime.ts                     # Real-time WebSocket Firebase Subscriptions
-│   ├── lib/
-│   │   └── firebase/config.ts                 # Firebase Client App Initialization
-│   ├── services/
-│   │   └── db.ts                              # Cloud Firestore Mutations / Writers
-│   ├── store/
-│   │   └── useAppStore.ts                     # Zustand Client Store
-│   └── types/
-│       └── index.ts                           # Comprehensive System Interfaces
+### Frontend
+- **Framework**: [Next.js 15 (App Router)](https://nextjs.org/)
+- **Styling**: [Tailwind CSS](https://tailwindcss.com/) + [Shadcn UI](https://ui.shadcn.com/)
+- **Animations**: [Framer Motion](https://www.framer.com/motion/)
+- **State Management**: [Zustand](https://github.com/pmndrs/zustand)
+- **Icons**: [Lucide React](https://lucide.dev/)
+
+### Backend & Infrastructure
+- **BaaS**: [Firebase](https://firebase.google.com/) (Firestore & Realtime Database)
+- **API (Optional Service Layer)**: Node.js Express (for advanced integrations)
+- **Authentication**: Firebase Auth
+- **Payments**: Razorpay Integration (Planned/Simulated)
+
+---
+
+## 🏗 Architecture Overview
+
+The system follows a modern **Clean Architecture** pattern to ensure scalability and maintainability.
+
+- **Multi-Tenancy**: Data is siloed per "Café ID", allowing a single instance to serve multiple businesses.
+- **Real-Time Sync**: Firebase Realtime Database handles the critical order lifecycle (Pending → Accepted → Ready → Delivered).
+- **Persistent Storage**: Firestore manages complex relationships like Menus, Categories, and Historical Analytics.
+- **Modular Components**: Shadcn-based UI components ensure a consistent, themeable, and accessible interface.
+
+---
+
+## 📁 Project Structure
+
+```bash
+smart-cafe/
+├── frontend/             # Next.js Web Application
+│   ├── src/
+│   │   ├── app/          # App Router (Pages & Layouts)
+│   │   ├── components/   # Atomic UI Components (Shadcn)
+│   │   ├── hooks/        # Custom React Hooks
+│   │   ├── services/     # Firebase Initialization & API Calls
+│   │   ├── store/        # Zustand State Management
+│   │   └── types/        # TypeScript Definitions
+├── backend/              # Node.js Service Layer (Firebase Admin)
+│   └── package.json
+└── shared/               # Shared Constants & Types (Optional)
 ```
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Setup Instructions
 
-### 1. Requirements
-Ensure you have `Node.js 18+` installed on your machine.
+### 1. Prerequisites
+- Node.js (v18+)
+- npm / pnpm / yarn
+- A Firebase Project
 
-### 2. Environment Variables
-To connect this to your specific Firebase instance, create a `.env.local` file at the root of the project with your Firebase Config:
+### 2. Environment Configuration
+Create a `.env.local` file in the `frontend/` directory:
 
 ```env
-NEXT_PUBLIC_FIREBASE_API_KEY="your-api-key"
-NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN="your-auth-domain"
-NEXT_PUBLIC_FIREBASE_PROJECT_ID="your-project-id"
-NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET="your-storage-bucket"
-NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID="your-sender-id"
-NEXT_PUBLIC_FIREBASE_APP_ID="your-app-id"
+# Firebase Configuration
+NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_project_id.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=your_project_id
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=your_project_id.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=your_id
+NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id
+NEXT_PUBLIC_FIREBASE_DATABASE_URL=your_database_url
+
+# Razorpay (Optional)
+NEXT_PUBLIC_RAZORPAY_KEY_ID=your_key_id
 ```
 
-> **Note**: For initial development, the app will gracefully fall back to a mock data system if the Firebase keys are absent or utilizing the default placeholder config.
-
 ### 3. Installation
-
-Run the following inside your terminal:
 ```bash
+# Install root dependencies
+npm install
+
+# Navigate to frontend and start development
+cd frontend
 npm install
 npm run dev
 ```
 
-The application will be running at `http://localhost:3000`.
+---
+
+## 🔗 Local Testing URLs
+
+| Role | URL | Description |
+|---|---|---|
+| **Customer** | `http://localhost:3000/menu` | Public menu for ordering |
+| **Staff/KDS** | `http://localhost:3000/dashboard/staff` | Kitchen display system |
+| **Admin** | `http://localhost:3000/dashboard/admin` | Business analytics & settings |
 
 ---
 
-## 🧩 Exploring the Application
+## 🔐 Security Note
 
-You can seamlessly test all 3 personas of the SaaS locally:
-
-1. **The Customer View**: Open `http://localhost:3000/blue-tokai-1` to simulate a customer scanning a table QR code. You can browse the menu, toggle Privacy Mode, use the floating chat widget, and place an order.
-2. **The KDS (Staff) View**: Open `http://localhost:3000/staff/blue-tokai-1` in a separate window. Note how orders placed by the customer appear *instantly* without browser refreshes. Change an order status here to see the customer tracker update live.
-3. **The Admin View**: Open `http://localhost:3000/admin` to observe the global analytics simulating all tenant dashboards.
+- **Environment Variables**: Never commit `.env` files. This project uses `.env.example` as a template.
+- **Firebase Security Rules**: Ensure Firestore and Realtime Database rules are configured to restrict access by `tenantId` and `userId`.
+- **API Limits**: Rate limiting should be applied on the Firebase Admin layer if using Cloud Functions.
 
 ---
 
-## 🗄️ Database Schemas (Firestore)
+## 🚢 Deployment Guide
 
-The multi-tenant nature implies that every core document is stamped with a `cafeId`. 
+### Vercel (Frontend)
+1. Push your code to GitHub.
+2. Link your repository to Vercel.
+3. Add the Environment Variables listed above in the Vercel Dashboard.
+4. Deploy!
 
-- **orders**: `{ id, cafeId, tableNumber, items[], totalAmount, status, paymentStatus, createdAt, doNotDisturb }`
-- **menu**: `{ id, cafeId, name, description, price, imageUrl, isVeg, isAvailable }`
-- **chatRequests**: `{ id, cafeId, tableNumber, type(water|bill|waiter|help), status, createdAt }`
+### Firebase (Backend/Database)
+1. Initialize Firebase CLI: `firebase init`
+2. Select Firestore, Realtime Database, and Hosting (if applicable).
+3. Deploy rules: `firebase deploy --only firestore:rules,database:rules`
 
-*Highly recommended to add composite indexes in Firebase for: `(cafeId, status)` and `(cafeId, createdAt DESC)` to ensure rapid loading.*
+---
+
+## 🗺 Roadmap
+
+- [ ] Multi-lingual menu support (i18n)
+- [ ] AI-powered recommendation engine based on order history
+- [ ] Integration with Physical Thermal Printers
+- [ ] Loyalty points and reward system for frequent customers
+- [ ] PWA support for offline menu browsing
 
 ---
 
-## 🔐 Security & Deployment
-
-For a production deployment to **Vercel**:
-1. Commit the code to GitHub.
-2. Connect the repository to Vercel.
-3. Inject the production Firebase variables into the Vercel Environment Configuration.
-4. Deploy. Next.js App Router will handle all Route Caching optimizing the initial loads automatically.
-
-### Firebase Security Rules
-Ensure your Firestore rules restrict reading/writing to the appropriate roles within the `[cafeId]` tenant parameters to prevent Cross-Tenant Data Leakage.
-
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
-    match /{document=**} {
-      allow read, write: if true; // REPLACE IN PRODUCTION WITH ROLE-BASED AUTH
-    }
-  }
-}
-```
-
----
-*Built to modern SaaS standards for scalability, aesthetics, and user privacy.*
+<p align="center">
+  Built with ❤️ by the SmartCafé Team.
+</p>
