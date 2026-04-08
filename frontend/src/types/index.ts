@@ -1,63 +1,44 @@
-export type Role = 'admin' | 'staff' | 'customer';
-
-export type OrderStatus = 'pending' | 'accepted' | 'preparing' | 'served' | 'completed' | 'cancelled';
-export type PaymentStatus = 'pending' | 'paid' | 'failed';
+export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "cancelled";
 
 export interface Cafe {
-  id: string; // The Cafe's unique slug/identifier (e.g., 'blue-tokai-1')
+  id: string;
   name: string;
+  ownerId: string;
   logoUrl?: string;
-  theme: {
-    primaryColor: string;
-    accentColor: string;
-  };
-  createdAt: number;
+  createdAt: any;
 }
 
 export interface MenuItem {
   id: string;
   cafeId: string;
-  categoryId: string;
   name: string;
   description: string;
   price: number;
-  imageUrl?: string;
+  category: string;
+  image?: string;
   isAvailable: boolean;
-  isVeg?: boolean;
-}
-
-export interface Category {
-  id: string;
-  cafeId: string;
-  name: string;
-  order: number;
-}
-
-export interface CartItem extends MenuItem {
-  quantity: number;
-  notes?: string;
 }
 
 export interface Order {
   id: string;
   cafeId: string;
-  tableNumber: string;
-  items: CartItem[];
-  totalAmount: number;
+  tableId?: string;
+  items: {
+    id: string;
+    name: string;
+    price: number;
+    quantity: number;
+  }[];
   status: OrderStatus;
-  paymentStatus: PaymentStatus;
-  paymentId?: string;
-  createdAt: number;
-  updatedAt: number;
-  doNotDisturb: boolean;
+  totalAmount: number;
+  createdAt: any;
 }
 
-export interface ChatRequest {
+export interface Notification {
   id: string;
   cafeId: string;
-  tableNumber: string;
-  type: 'water' | 'bill' | 'waiter' | 'help';
-  status: 'pending' | 'resolved';
-  createdAt: number;
-  resolvedAt?: number;
+  message: string;
+  read: boolean;
+  type: "new_order" | "status_update";
+  createdAt: any;
 }
