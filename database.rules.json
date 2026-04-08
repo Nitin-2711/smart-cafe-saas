@@ -1,0 +1,19 @@
+{
+  "rules": {
+    "notifications": {
+      "$cafeId": {
+        ".read": "root.child('cafes').child($cafeId).child('ownerId').val() === auth.uid",
+        ".write": "root.child('cafes').child($cafeId).child('ownerId').val() === auth.uid",
+        "$notificationId": {
+          ".validate": "newData.hasChildren(['message', 'createdAt'])"
+        }
+      }
+    },
+    "cafes": {
+      "$cafeId": {
+        ".read": "true",
+        ".write": "data.child('ownerId').val() === auth.uid || (!data.exists() && newData.child('ownerId').val() === auth.uid)"
+      }
+    }
+  }
+}

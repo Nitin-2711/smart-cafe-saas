@@ -1,0 +1,51 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper: Is the user authenticated?
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    // Helper: Does the user own this specific cafe?
+    function isCafeOwner(cafeId) {
+      return isSignedIn() && get(/databases/$(database)/documents/cafes/$(cafeId)).data.ownerId == request.auth.uid;
+    }
+
+    // --- Cafes Collection ---
+    match /cafes/{cafeId} {
+      allow read: if true; // Publicly viewable for branding
+      allow create: if isSignedIn(); 
+      allow update, delete: if isCafeOwner(cafeId);
+    }
+
+    // --- Menu Collection ---
+    match /menu/{itemId} {
+      allow read: if true; // Customers need to browse the menu
+      // Only the cafe owner can modify their menu
+      allow write: if isCafeOwner(request.resource.data.cafeId || resource.data.cafeId);
+    }
+
+    // --- Orders Collection ---
+    match /orders/{orderId} {
+      // 1. Customers can read their own orders
+      // 2. Cafe owners can read all orders for their cafe
+      allow read: if (isSignedIn() && resource.data.userId == request.auth.uid) || 
+                   isCafeOwner(resource.data.cafeId);
+
+      // Only allow order creation if it's for 'pending' and the user is authenticated
+      // Note: Payment verification usually happens in the backend which uses the Admin SDK (bypassing rules)
+      allow create: if isSignedIn() && request.resource.data.status == 'pending';
+
+      // Status updates are restricted to the cafe owner/staff
+      allow update: if isCafeOwner(resource.data.cafeId);
+      
+      allow delete: if false; // Orders should never be deleted for audit trails
+    }
+
+    // --- Notifications Collection ---
+    match /notifications/{notifId} {
+      allow read, write: if isCafeOwner(request.resource.data.cafeId || resource.data.cafeId);
+    }
+  }
+}
