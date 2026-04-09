@@ -1,4 +1,4 @@
-export type OrderStatus = "pending" | "preparing" | "ready" | "served" | "cancelled";
+export type OrderStatus = "pending" | "preparing" | "ready" | "delivered" | "cancelled";
 
 export interface Cafe {
   id: string;

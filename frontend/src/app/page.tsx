@@ -121,24 +121,41 @@ export default function LandingPage() {
           </motion.div>
         </motion.div>
 
-        {/* Features Section */}
-        <div className="container mx-auto max-w-5xl mt-32" id="features">
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              { icon: Shield, color: '#00D1FF', title: 'Privacy First', desc: 'Unique DND mode allows customers to order silently without waiter interruptions.' },
-              { icon: Zap, color: '#6C5CE7', title: 'Real-time Sync', desc: 'Zero-lag Firestore synchronization from table order directly to the kitchen display.' },
-              { icon: BarChart3, color: '#00D1FF', title: 'Multi-tenant SaaS', desc: 'Built for scalability. Manage 100+ cafes securely with separate database shards.' }
-            ].map((feature, i) => (
-              <motion.div 
-                key={i}
-                whileHover={{ y: -10 }}
-                className="p-8 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300"
-              >
-                <feature.icon className="w-10 h-10 mb-6" style={{ color: feature.color }} />
-                <h3 className="text-xl font-semibold mb-3">{feature.title}</h3>
-                <p className="text-zinc-400 leading-relaxed text-sm">{feature.desc}</p>
-              </motion.div>
-            ))}
+        {/* Admin Previews Section */}
+        <div className="container mx-auto max-w-5xl mt-32 px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl md:text-5xl font-black tracking-tighter mb-4 italic">Engineered for Growth.</h2>
+            <p className="text-zinc-500 max-w-xl mx-auto font-medium">From the kitchen floor to the boardroom, SmartCafé provides precision control at every layer.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-8">
+            <Link href="/dashboard/staff" className="group p-8 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-[#6C5CE7]/50 transition-all relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-[#6C5CE7]/10 flex items-center justify-center mb-6 text-[#6C5CE7]">
+                  <ChefHat className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Staff KDS Dashboard</h3>
+                <p className="text-zinc-400 text-sm mb-6 leading-relaxed">Real-time kitchen display system for orders, prep-times, and table sync.</p>
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#6C5CE7]">
+                  Launch KDS Terminal <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-[#6C5CE7]/5 blur-[60px] rounded-full group-hover:bg-[#6C5CE7]/10 transition-colors" />
+            </Link>
+
+            <Link href="/dashboard/admin" className="group p-8 rounded-[2.5rem] bg-white/5 border border-white/10 hover:border-[#00D1FF]/50 transition-all relative overflow-hidden">
+              <div className="relative z-10">
+                <div className="w-12 h-12 rounded-2xl bg-[#00D1FF]/10 flex items-center justify-center mb-6 text-[#00D1FF]">
+                  <BarChart3 className="w-6 h-6" />
+                </div>
+                <h3 className="text-2xl font-bold mb-2">Owner Analytics</h3>
+                <p className="text-zinc-400 text-sm mb-6 leading-relaxed">Deep insights into revenue, conversion rates, and multi-tenant scaling metrics.</p>
+                <div className="flex items-center gap-2 text-xs font-black uppercase tracking-widest text-[#00D1FF]">
+                  Open Enterprise Command <ArrowRight className="w-4 h-4" />
+                </div>
+              </div>
+              <div className="absolute top-[-20%] right-[-20%] w-[60%] h-[60%] bg-[#00D1FF]/5 blur-[60px] rounded-full group-hover:bg-[#00D1FF]/10 transition-colors" />
+            </Link>
           </div>
         </div>
       </main>

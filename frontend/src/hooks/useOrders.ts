@@ -1,32 +1,36 @@
-"use client";
-import { useEffect } from "react";
-import { collection, query, where, onSnapshot, orderBy } from "firebase/firestore";
-import { db } from "@/services/firebase";
-import { useAdminStore } from "@/store/useAdminStore";
+import { useState, useEffect } from "react";
+import { Order } from "@/types";
+import { subscribeToOrders, updateOrderStatus as updateStatus } from "@/services/firebase/orders";
 
-export function useOrders(cafeId: string | null) {
-  const { setOrders } = useAdminStore();
+export const useOrders = (cafeId: string | null) => {
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
 
   useEffect(() => {
-    if (!cafeId) return;
+    if (!cafeId) {
+      setLoading(false);
+      return;
+    }
 
-    const ordersQuery = query(
-      collection(db, "orders"),
-      where("cafeId", "==", cafeId),
-      orderBy("createdAt", "desc")
-    );
-
-    const unsubscribe = onSnapshot(ordersQuery, (snapshot) => {
-      const orders = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as any[];
-      
-      setOrders(orders);
-    }, (error) => {
-      console.error("Error fetching orders:", error);
+    setLoading(true);
+    const unsubscribe = subscribeToOrders(cafeId, (fetchedOrders) => {
+      setOrders(fetchedOrders);
+      setLoading(false);
     });
 
     return () => unsubscribe();
-  }, [cafeId, setOrders]);
-}
+  }, [cafeId]);
+
+  const updateOrderStatus = async (orderId: string, status: Order["status"]) => {
+    if (!cafeId) return;
+    try {
+      await updateStatus(cafeId, orderId, status);
+    } catch (err) {
+      console.error("Failed to update order status:", err);
+      throw err;
+    }
+  };
+
+  return { orders, loading, error, updateOrderStatus };
+};

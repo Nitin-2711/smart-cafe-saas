@@ -1,60 +1,110 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRouter } from 'next/navigation';
-import { CheckCircle2, QrCode, ArrowLeft } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { CheckCircle2, QrCode, ArrowLeft, Coffee, Utensils, Zap } from 'lucide-react';
 import DemoDevice from '@/components/demo/DemoDevice';
 import DemoNavbar from '@/components/demo/DemoNavbar';
 import DemoMenu from '@/components/demo/DemoMenu';
 import DemoCart from '@/components/demo/DemoCart';
-import { useCartStore } from '@/store/useCartStore';
+import OrderHistory from '@/components/demo/OrderHistory';
+import PaymentModal from '@/components/demo/PaymentModal';
+import { useCart } from '@/hooks/useCart';
+import { useOrders } from '@/hooks/useOrders';
+import { subscribeToOrderStatus } from '@/services/firebase/orders';
+import { OrderStatus } from '@/types';
 
 export default function DemoPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  // Scoped per cafe and table from URL
+  const cafeId = searchParams.get('cafe') || 'blue-tokai-1';
+  const tableId = searchParams.get('table') || '04';
+
+  // Real logic hooks
+  const { checkout, getTotal } = useCart();
+  const { orders } = useOrders(cafeId);
+  
   const [loading, setLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   const [isCartOpen, setIsCartOpen] = useState(false);
-  const [orderStatus, setOrderStatus] = useState<'idle' | 'placing' | 'success'>('idle');
-  const clearCart = useCartStore((state) => state.clearCart);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isPaymentOpen, setIsPaymentOpen] = useState(false);
+  
+  // Internal state for UI tracking
+  const [activeOrderId, setActiveOrderId] = useState<string | null>(null);
+  const [orderStatus, setOrderStatus] = useState<'idle' | OrderStatus>('idle');
 
   useEffect(() => {
-    // Simulate premium loading
-    const timer = setTimeout(() => setLoading(false), 1200);
-    return () => clearTimeout(timer);
+    const interval = setInterval(() => {
+      setLoadingProgress(prev => {
+        if (prev >= 100) {
+          clearInterval(interval);
+          setTimeout(() => setLoading(false), 500);
+          return 100;
+        }
+        return prev + 5;
+      });
+    }, 50);
+    return () => clearInterval(interval);
   }, []);
 
+  // REAL-TIME STATUS LISTENER
+  useEffect(() => {
+    if (!activeOrderId) return;
+
+    const unsubscribe = subscribeToOrderStatus(cafeId, activeOrderId, (status) => {
+      // Map Firebase status to our UI states if needed, or use directly
+      setOrderStatus(status);
+    });
+
+    return () => unsubscribe();
+  }, [activeOrderId, cafeId]);
+
   const handlePlaceOrder = () => {
-    setOrderStatus('placing');
     setIsCartOpen(false);
-    
-    // Simulate order processing
-    setTimeout(() => {
-      setOrderStatus('success');
-      clearCart();
-    }, 2000);
+    setIsPaymentOpen(true);
+  };
+
+  const onPaymentSuccess = async () => {
+    setIsPaymentOpen(false);
+    try {
+      setOrderStatus('pending');
+      
+      // REAL CHECKOUT
+      const orderId = await checkout(cafeId, tableId);
+      setActiveOrderId(orderId);
+    } catch (error) {
+      console.error("Order failed:", error);
+      setOrderStatus('idle');
+      alert("Failed to place order. Check console.");
+    }
   };
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0A0A0B] flex items-center justify-center">
+      <div className="min-h-screen bg-[#0A0A0B] flex flex-col items-center justify-center p-6">
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="flex flex-col items-center gap-6"
+          className="flex flex-col items-center gap-8 w-full max-w-xs"
         >
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#6C5CE7] to-[#00D1FF] flex items-center justify-center animate-pulse">
-            <QrCode className="w-8 h-8 text-white" />
+          <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-[#6C5CE7] to-[#00D1FF] flex items-center justify-center shadow-2xl shadow-[#6C5CE7]/20">
+            <QrCode className="w-10 h-10 text-white" />
           </div>
-          <div className="flex flex-col items-center gap-2">
-            <span className="text-white font-bold tracking-tight text-xl">SmartCafé</span>
-            <div className="flex gap-1">
-              {[0, 1, 2].map((i) => (
-                <motion.div
-                  key={i}
-                  animate={{ opacity: [0.3, 1, 0.3] }}
-                  transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }}
-                  className="w-1.5 h-1.5 rounded-full bg-zinc-500"
-                />
-              ))}
+          
+          <div className="w-full space-y-4">
+            <div className="flex justify-between items-end">
+              <span className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Initialising SaaS Experience</span>
+              <span className="text-[#6C5CE7] text-lg font-black tracking-tighter">{loadingProgress}%</span>
+            </div>
+            <div className="h-1 w-full bg-white/5 rounded-full overflow-hidden">
+              <motion.div 
+                className="h-full bg-gradient-to-r from-[#6C5CE7] to-[#00D1FF]"
+                initial={{ width: 0 }}
+                animate={{ width: `${loadingProgress}%` }}
+              />
             </div>
           </div>
         </motion.div>
@@ -66,12 +116,16 @@ export default function DemoPage() {
     <div className="min-h-screen bg-[#0A0A0B] text-white selection:bg-[#6C5CE7] overflow-hidden">
       {/* Background Gradients */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#6C5CE7]/20 blur-[120px] rounded-full" />
+        <motion.div 
+          animate={{ scale: [1, 1.2, 1], opacity: [0.1, 0.15, 0.1] }}
+          transition={{ duration: 10, repeat: Infinity }}
+          className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#6C5CE7]/20 blur-[120px] rounded-full" 
+        />
         <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-[#00D1FF]/10 blur-[120px] rounded-full" />
       </div>
 
       {/* Main Content */}
-      <div className="container mx-auto px-6 pt-12 min-h-screen flex flex-col items-center lg:flex-row lg:justify-between lg:gap-20">
+      <div className="container mx-auto px-6 py-12 lg:py-0 min-h-screen flex flex-col items-center lg:flex-row lg:justify-between lg:gap-20 relative z-10">
         
         {/* Left Side: Info */}
         <motion.div 
@@ -80,90 +134,142 @@ export default function DemoPage() {
           transition={{ duration: 0.8 }}
           className="max-w-xl text-center lg:text-left mb-16 lg:mb-0"
         >
-          <button 
+          <motion.button 
+            whileHover={{ x: -4 }}
             onClick={() => router.push('/')}
-            className="inline-flex items-center gap-2 text-zinc-400 hover:text-white transition-colors mb-8 group"
+            className="inline-flex items-center gap-2 text-zinc-500 hover:text-white transition-colors mb-12 group font-medium text-sm"
           >
-            <ArrowLeft className="w-4 h-4 transition-transform group-hover:-translate-x-1" />
+            <ArrowLeft className="w-4 h-4" />
             Back to Home
-          </button>
-          <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 leading-tight">
-            The future of <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6C5CE7] to-[#00D1FF]">
-              café interaction.
+          </motion.button>
+
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#6C5CE7]/10 border border-[#6C5CE7]/20 text-[#6C5CE7] text-[10px] font-bold uppercase tracking-widest mb-6">
+            <Zap className="w-3 h-3 fill-current" />
+            Real-time Order Sync Active
+          </div>
+
+          <h1 className="text-4xl md:text-7xl font-bold tracking-tight mb-8 leading-[1.1]">
+            Next-Gen <br />
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#6C5CE7] via-[#a29bfe] to-[#00D1FF]">
+              Dining SaaS.
             </span>
           </h1>
-          <p className="text-lg text-zinc-400 mb-8 max-w-md mx-auto lg:mx-0 leading-relaxed">
-            Experience the seamless flow of SmartCafé. Scan, order, and pay without ever leaving your seat. No apps, no friction.
+          
+          <p className="text-lg text-zinc-400 mb-12 max-w-md mx-auto lg:mx-0 leading-relaxed font-medium">
+            Scan. Order. Repeat. Experience the seamless real-time synchronization between table {tableId} and the kitchen.
           </p>
           
-          <div className="grid grid-cols-2 gap-6 max-w-md mx-auto lg:mx-0">
-            {[
-              { label: 'Avg. Order Time', val: '45s' },
-              { label: 'Customer Satisfaction', val: '99%' },
-            ].map((stat, i) => (
-              <div key={i} className="p-4 rounded-2xl bg-white/5 border border-white/10">
-                <div className="text-zinc-500 text-xs font-medium mb-1">{stat.label}</div>
-                <div className="text-xl font-bold text-white">{stat.val}</div>
-              </div>
-            ))}
+          <div className="flex flex-wrap justify-center lg:justify-start gap-4">
+            <div className="px-5 py-3 rounded-2xl bg-white/5 border border-white/10 flex items-center gap-3">
+              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+              <span className="text-xs font-bold uppercase tracking-widest text-zinc-400">Live Server Connected</span>
+            </div>
           </div>
         </motion.div>
 
         {/* Right Side: Device Demo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 50 }}
+          initial={{ opacity: 0, scale: 0.9, y: 100 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-          className="relative"
+          transition={{ duration: 1, cubicBezier: [0.22, 1, 0.36, 1] }}
+          className="relative group"
         >
           <DemoDevice>
             <div className="relative h-full flex flex-col">
               <DemoNavbar 
                 onCartClick={() => setIsCartOpen(true)} 
+                onHistoryClick={() => setIsHistoryOpen(true)}
               />
               
               <div className="flex-1">
-                <div className="px-6 py-4">
-                  <h2 className="text-2xl font-bold mb-2">Welcome!</h2>
-                  <p className="text-xs text-zinc-500 font-medium">Table No: 04 • High Ground Café</p>
+                <div className="px-6 py-6">
+                  <motion.div 
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="space-y-1"
+                  >
+                    <h2 className="text-2xl font-black tracking-tight dark:text-white">Morning, Drinker!</h2>
+                    <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">Table {tableId} • {cafeId === 'blue-tokai-1' ? 'High Ground Café' : 'Cafe ' + cafeId}</p>
+                  </motion.div>
                 </div>
                 
                 <DemoMenu />
               </div>
 
-              {/* Order Success Overlay */}
+              {/* Real-time Order Status Overlays */}
               <AnimatePresence>
                 {orderStatus !== 'idle' && (
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
-                    className="absolute inset-0 z-[100] bg-[#6C5CE7] flex flex-col items-center justify-center p-8 text-center"
+                    className="absolute inset-0 z-[100] bg-black/95 backdrop-blur-xl flex flex-col items-center justify-center p-8 text-center"
                   >
-                    {orderStatus === 'placing' ? (
-                      <div className="space-y-4">
-                        <div className="w-12 h-12 border-4 border-white/30 border-t-white rounded-full animate-spin mx-auto" />
-                        <p className="text-white font-bold">Placing Order...</p>
+                    {orderStatus === 'pending' && (
+                      <div className="space-y-6">
+                        <div className="relative">
+                          <div className="w-16 h-16 border-4 border-[#6C5CE7]/20 border-t-[#6C5CE7] rounded-full animate-spin mx-auto" />
+                          <div className="absolute inset-0 flex items-center justify-center">
+                            <Zap className="w-6 h-6 text-[#6C5CE7] animate-pulse" />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="text-white font-black text-xl tracking-tight uppercase">Placing Order</p>
+                          <p className="text-zinc-500 text-xs mt-2">Waiting for kitchen acceptance...</p>
+                        </div>
                       </div>
-                    ) : (
+                    )}
+
+                    {orderStatus === 'preparing' && (
+                      <div className="space-y-6">
+                        <div className="w-20 h-20 bg-orange-500/10 rounded-full flex items-center justify-center mx-auto border border-orange-500/20">
+                          <Coffee className="w-10 h-10 text-orange-500 animate-bounce" />
+                        </div>
+                        <div>
+                          <p className="text-orange-500 font-black text-xl tracking-tight uppercase tracking-tighter">Kitchen is Preparing</p>
+                          <p className="text-zinc-500 text-xs mt-2">Your specialist is crafting your order</p>
+                        </div>
+                        <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
+                          <motion.div 
+                            className="h-full bg-orange-500"
+                            initial={{ width: 0 }}
+                            animate={{ width: '60%' }}
+                            transition={{ duration: 3 }}
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {orderStatus === 'ready' && (
+                      <div className="space-y-6">
+                        <div className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto border border-green-500/20">
+                          <CheckCircle2 className="w-10 h-10 text-green-500 animate-pulse" />
+                        </div>
+                        <div>
+                          <p className="text-green-500 font-black text-xl tracking-tight uppercase italic">Ready for Pickup!</p>
+                          <p className="text-zinc-500 text-xs mt-2 italic font-bold">Head to the counter at High Ground</p>
+                        </div>
+                      </div>
+                    )}
+
+                    {orderStatus === 'delivered' && (
                       <motion.div
                         initial={{ scale: 0.5, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
-                        className="space-y-6"
+                        className="space-y-8"
                       >
-                        <div className="w-20 h-20 bg-white rounded-full flex items-center justify-center mx-auto shadow-2xl">
-                          <CheckCircle2 className="w-12 h-12 text-[#6C5CE7]" />
+                        <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto border border-white/20">
+                          <Utensils className="w-12 h-12 text-white" />
                         </div>
                         <div>
-                          <h3 className="text-2xl font-bold text-white mb-2">Order Confirmed!</h3>
-                          <p className="text-white/80 text-sm">Your coffee is being prepared.</p>
+                          <h3 className="text-2xl font-black text-white mb-2 italic">Enjoy your meal!</h3>
+                          <p className="text-zinc-400 text-sm font-medium">Order served at Table {tableId}.</p>
                         </div>
                         <button
-                          onClick={() => setOrderStatus('idle')}
-                          className="px-6 py-2 bg-white text-[#6C5CE7] rounded-full font-bold text-sm"
+                          onClick={() => { setOrderStatus('idle'); setActiveOrderId(null); }}
+                          className="w-full py-4 bg-white text-black rounded-2xl font-black text-sm uppercase tracking-widest hover:scale-105 active:scale-95 transition-all shadow-xl"
                         >
-                          Back to Menu
+                          New Order
                         </button>
                       </motion.div>
                     )}
@@ -176,11 +282,23 @@ export default function DemoPage() {
                 onClose={() => setIsCartOpen(false)} 
                 onOrderPlace={handlePlaceOrder}
               />
+
+              <OrderHistory 
+                isOpen={isHistoryOpen}
+                onClose={() => setIsHistoryOpen(false)}
+                orders={orders.filter(o => o.tableId === tableId)}
+              />
+
+              <PaymentModal 
+                isOpen={isPaymentOpen}
+                onClose={() => setIsPaymentOpen(false)}
+                onSuccess={onPaymentSuccess}
+                amount={getTotal()}
+              />
             </div>
           </DemoDevice>
           
-          {/* Blur shadow for device */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[80%] h-20 bg-[#6C5CE7]/30 blur-[60px] rounded-full pointer-events-none" />
+          <div className="absolute -bottom-20 left-1/2 -translate-x-1/2 w-[120%] h-40 bg-[#6C5CE7]/20 blur-[100px] rounded-full pointer-events-none transition-all duration-700 group-hover:bg-[#6C5CE7]/30" />
         </motion.div>
 
       </div>
