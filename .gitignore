@@ -35,3 +35,8 @@ dist/
 *.sst
 *.sst.meta
 cache/
+
+
+.next
+node_modules
+.env
